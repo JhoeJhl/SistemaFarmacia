@@ -15,7 +15,10 @@ class ReporteController
             die("Error: No se especificó una venta.");
         }
 
-        $id_venta = $_GET['id'];
+        $id_venta = filter_var($_GET['id'], FILTER_VALIDATE_INT);
+        if ($id_venta === false) {
+            die("Error: Venta no válida.");
+        }
 
         // 2. Obtener datos
         $ventaModel = new Venta();
@@ -29,8 +32,9 @@ class ReporteController
         //       CONFIGURACIÓN DEL PDF (TICKET)
         // ==========================================
 
-        // 80mm de ancho (Estándar Térmico) y altura variable (aprox 220mm para empezar)
-        $pdf = new FPDF('P', 'mm', array(80, 260));
+        // 80mm de ancho (Estándar Térmico) y altura según la cantidad de productos
+        $altoTicket = 150 + count($venta['productos']) * 5;
+        $pdf = new FPDF('P', 'mm', array(80, $altoTicket));
         $pdf->AddPage();
         $pdf->SetMargins(4, 4, 4);
         $pdf->SetAutoPageBreak(false);
@@ -66,7 +70,7 @@ class ReporteController
 
         $pdf->Cell(20, 5, 'Cliente:', 0, 0);
         // Recortamos el nombre si es muy largo para que no rompa el diseño
-        $nombreCliente = utf8_decode(substr($venta['nombre_cliente'], 0, 25));
+        $nombreCliente = $this->textoPdf($venta['nombre_cliente'] ?: 'Público General', 25);
         $pdf->Cell(52, 5, $nombreCliente, 0, 1, 'R');
 
         $pdf->Ln(2);
@@ -80,20 +84,19 @@ class ReporteController
         $pdf->Cell(8, 4, 'CANT', 0, 0, 'C');
         $pdf->Cell(14, 4, 'P.UNIT', 0, 0, 'R');
         $pdf->Cell(16, 4, 'TOTAL', 0, 1, 'R');
-        $pdf->Ln(4);
+        $pdf->Ln(2);
 
         $pdf->SetFont('Arial', '', 7);
 
         foreach ($venta['productos'] as $prod) {
-            $nombre = utf8_decode(substr($prod['nombre_producto'], 0, 22)); // Nombre corto
+            $nombre = $this->textoPdf($prod['nombre_producto'], 22); // Nombre corto
             $precio = number_format($prod['precio_unitario'], 2);
             $subtotal = number_format($prod['subtotal'], 2);
 
-            $pdf->Cell(34, 4, $nombre, 0, 0, 'L');
-            $pdf->Cell(8, 4, $prod['cantidad'], 0, 0, 'C');
-            $pdf->Cell(14, 4, $precio, 0, 0, 'R');
-            $pdf->Cell(16, 4, $subtotal, 0, 1, 'R');
-            $pdf->Ln(4);
+            $pdf->Cell(34, 5, $nombre, 0, 0, 'L');
+            $pdf->Cell(8, 5, $prod['cantidad'], 0, 0, 'C');
+            $pdf->Cell(14, 5, $precio, 0, 0, 'R');
+            $pdf->Cell(16, 5, $subtotal, 0, 1, 'R');
         }
 
         $pdf->Ln(2);
@@ -107,19 +110,25 @@ class ReporteController
         $qrData = "FACTURA-FARMAPLUS-" . $venta['id_venta'] . "-TOTAL-" . $venta['total'];
         $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($qrData);
 
-        // Insertamos la imagen centrada
-        // (x=25, y=posición actual, w=30, h=30)
-        $pdf->Image($qrUrl, 25, $pdf->GetY(), 30, 30, 'PNG');
-
-        // Movemos el cursor abajo del QR
-        $pdf->Ln(32);
+        // Insertamos la imagen centrada (x=25, y=posición actual, w=30, h=30).
+        // Si el servicio del QR no responde, el ticket se genera igual sin el código.
+        $qrTemporal = $this->descargarQr($qrUrl);
+        if ($qrTemporal) {
+            try {
+                $pdf->Image($qrTemporal, 25, $pdf->GetY(), 30, 30, 'PNG');
+                $pdf->Ln(32);
+            } catch (Exception $e) {
+                // QR inválido: se omite
+            }
+            unlink($qrTemporal);
+        }
 
         // --- PIE DE PÁGINA ---
         $pdf->SetFont('Arial', '', 7);
-        $pdf->Cell(72, 4, utf8_decode('CÓDIGO DE CONTROL: A1-B2-C3-D4'), 0, 1, 'C');
+        $pdf->Cell(72, 4, $this->textoPdf('CÓDIGO DE CONTROL: A1-B2-C3-D4'), 0, 1, 'C');
         $pdf->Ln(1);
         $pdf->SetFont('Arial', 'I', 7);
-        $pdf->MultiCell(72, 3, utf8_decode("Gracias por su preferencia.\n" .
+        $pdf->MultiCell(72, 3, $this->textoPdf("Gracias por su preferencia.\n" .
             "Cualquier reclamo.\n" .
             "Visítenos en www.farmaplus.com.bo"), 0, 'C');
 
@@ -127,6 +136,30 @@ class ReporteController
         // 'I' = Inline (Ver en navegador), 'D' = Download (Descargar directo)
         $nombreArchivo = 'Factura_Venta_' . str_pad($venta['id_venta'], 5, '0', STR_PAD_LEFT) . '.pdf';
         $pdf->Output('I', $nombreArchivo);
+    }
+
+    // Recorta un texto UTF-8 y lo convierte a Windows-1252, que es la codificación de las fuentes de FPDF
+    // (reemplaza a utf8_decode(), obsoleta desde PHP 8.2)
+    private function textoPdf($texto, $largo = null)
+    {
+        $texto = (string)$texto;
+        if ($largo !== null) {
+            $texto = mb_substr($texto, 0, $largo, 'UTF-8');
+        }
+        $convertido = iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $texto);
+        return $convertido !== false ? $convertido : $texto;
+    }
+
+    private function descargarQr($url)
+    {
+        $contexto = stream_context_create(['http' => ['timeout' => 3]]);
+        $imagen = @file_get_contents($url, false, $contexto);
+        if ($imagen === false || $imagen === '') {
+            return null;
+        }
+        $archivo = tempnam(sys_get_temp_dir(), 'qr_');
+        file_put_contents($archivo, $imagen);
+        return $archivo;
     }
     // ... dentro de ReporteController ...
 
