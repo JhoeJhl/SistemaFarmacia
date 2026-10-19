@@ -91,6 +91,12 @@
                     Historial Ventas
                 </a>
 
+                <a href="index.php?controller=cliente&action=index"
+                    class="flex items-center px-3 py-2.5 text-brand-100 hover:bg-brand-800 hover:text-white rounded-lg transition-all group">
+                    <i class="ph ph-users text-xl mr-3 text-brand-400 group-hover:text-emerald-400"></i>
+                    Clientes
+                </a>
+
                 <?php if (function_exists('isAdmin') && isAdmin()): ?>
                     <a href="index.php?controller=bitacora&action=index"
                         class="flex items-center px-3 py-2.5 text-brand-100 hover:bg-brand-800 hover:text-white rounded-lg transition-all group">

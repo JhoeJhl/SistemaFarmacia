@@ -35,9 +35,8 @@
                 <label class="text-xs text-brand-200 uppercase font-bold">Cliente</label>
                 <div class="flex gap-2 mt-1">
                     <select id="select-cliente" class="w-full bg-brand-800 border border-brand-700 text-white rounded p-2 text-sm focus:outline-none">
-                        <option value="1">Cliente Casual / Público General</option>
                         <?php if(isset($clientes)): foreach($clientes as $c): ?>
-                            <option value="<?= $c['id_cliente'] ?>"><?= $c['nombre'] ?></option>
+                            <option value="<?= (int)$c['id_cliente'] ?>"><?= htmlspecialchars($c['nombre'], ENT_QUOTES, 'UTF-8') ?></option>
                         <?php endforeach; endif; ?>
                     </select>
                     <a href="index.php?controller=cliente&action=index" target="_blank" class="p-2 bg-brand-700 hover:bg-brand-600 rounded text-white" title="Nuevo Cliente">
