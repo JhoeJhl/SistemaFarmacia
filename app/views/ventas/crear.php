@@ -96,6 +96,7 @@
     const productosDB = <?= json_encode($productos) ?>;
 </script>
 
+<script src="js/producto-imagen.js"></script>
 <script src="js/pos.js"></script>
 
 <script>

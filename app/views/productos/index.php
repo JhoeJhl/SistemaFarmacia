@@ -75,6 +75,7 @@
 
 </div>
 
+<script src="js/producto-imagen.js"></script>
 <script>
     // 1. Datos iniciales desde PHP
     const productosDB = <?= json_encode($productos) ?>;
@@ -121,13 +122,12 @@
         productosPagina.forEach(p => {
             const stockBajo = p.stock <= 5;
             const esMedicamento = p.tipo === 'MEDICAMENTO';
-            const img = p.imagen && p.imagen !== '' ? `img/uploads/productos/${p.imagen}` : 'img/uploads/productos/default_product.png';
 
             // HTML de la Tarjeta
             const html = `
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group flex flex-col h-full relative">
                     <div class="h-48 bg-gray-50 relative p-4 flex items-center justify-center">
-                        <img src="${img}" class="h-full w-full object-contain group-hover:scale-105 transition-transform duration-500">
+                        ${imagenProductoHtml(p, 'h-full w-full object-contain group-hover:scale-105 transition-transform duration-500', 'text-7xl')}
                         
                         <div class="absolute top-3 left-3 flex flex-col gap-1 items-start">
                             ${esMedicamento ? '<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full border border-blue-200">MED</span>' : ''}

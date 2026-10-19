@@ -18,7 +18,7 @@ function renderProductos() {
         const html = `
             <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all group overflow-hidden ${opacidad} ${cursor}" ${clickEvent}>
                 <div class="h-32 w-full bg-gray-100 relative">
-                    <img src="img/uploads/productos/${p.imagen || 'default_product.png'}" class="w-full h-full object-contain p-2">
+                    ${imagenProductoHtml(p, 'w-full h-full object-contain p-2', 'text-5xl')}
                     ${sinStock ? '<div class="absolute inset-0 bg-black/10 flex items-center justify-center font-bold text-red-600 bg-white/80">AGOTADO</div>' : ''}
                     <div class="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold shadow-sm">
                         Stock: ${p.stock}

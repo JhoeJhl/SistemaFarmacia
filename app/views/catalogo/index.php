@@ -12,6 +12,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/producto-imagen.js"></script>
 
     <script>
         tailwind.config = {
@@ -126,9 +127,7 @@
                     </div>
 
                     <div class="relative h-48 bg-gray-50 rounded-2xl mb-4 overflow-hidden group-hover:bg-brand-50/30 transition-colors">
-                        <img src="img/uploads/productos/<?= $p['imagen'] ?? 'default_product.png' ?>"
-                            class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
-                            alt="<?= $p['nombre'] ?>">
+                        <?= imagenProducto($p, 'w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500') ?>
 
                         <button onclick='agregarAlCarrito(<?= json_encode($p) ?>)'
                             class="absolute bottom-3 right-3 w-10 h-10 bg-brand-600 text-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-brand-700 hover:scale-110">
@@ -254,7 +253,7 @@
                 contenedor.innerHTML += `
                     <div class="flex gap-4 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-brand-200 transition-colors">
                         <div class="w-20 h-20 bg-gray-50 rounded-xl flex-shrink-0 p-2">
-                            <img src="img/uploads/productos/${p.imagen || 'default_product.png'}" class="w-full h-full object-contain">
+                            ${imagenProductoHtml(p, 'w-full h-full object-contain', 'text-3xl')}
                         </div>
                         <div class="flex-1 flex flex-col justify-between">
                             <div>

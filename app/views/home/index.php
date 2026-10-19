@@ -99,9 +99,7 @@
                     <?php foreach ($destacados as $prod): ?>
                         <div class="group relative bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-xl transition-all duration-300">
                             <div class="h-48 bg-gray-50 rounded-xl overflow-hidden mb-4 relative">
-                                <img src="img/uploads/productos/<?= $prod['imagen'] ?? 'default_product.png' ?>"
-                                    alt="<?= $prod['nombre'] ?>"
-                                    class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
+                                <?= imagenProducto($prod, 'w-full h-full object-contain group-hover:scale-105 transition-transform duration-300') ?>
 
                                 <?php if ($prod['stock'] <= 5): ?>
                                     <span class="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Pocas Unidades</span>

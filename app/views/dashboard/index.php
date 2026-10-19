@@ -83,11 +83,7 @@
                     <div class="flex items-center justify-between border-b border-gray-50 pb-3 last:border-0">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-xs font-bold text-gray-400 overflow-hidden border border-gray-100">
-                                <?php if (!empty($prod['imagen']) && $prod['imagen'] != 'default_product.png'): ?>
-                                    <img src="img/uploads/productos/<?= $prod['imagen'] ?>" class="w-full h-full object-cover">
-                                <?php else: ?>
-                                    <?= substr($prod['nombre'], 0, 2) ?>
-                                <?php endif; ?>
+                                <?= imagenProducto($prod, 'w-full h-full object-cover', 'text-xl') ?>
                             </div>
                             <div>
                                 <p class="text-sm font-bold text-gray-800 line-clamp-1" title="<?= $prod['nombre'] ?>">

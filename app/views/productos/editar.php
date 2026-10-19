@@ -136,13 +136,14 @@
                     <h3 class="font-bold text-gray-800 mb-4">Imagen del Producto</h3>
                     
                     <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors relative">
+                        <?php $conFoto = tieneImagenProducto($producto['imagen'] ?? ''); ?>
                         <img id="preview" 
-                             src="img/uploads/productos/<?= !empty($producto['imagen']) ? $producto['imagen'] : 'default_product.png' ?>" 
-                             class="w-full h-48 object-contain mb-4 rounded-lg">
+                             src="<?= $conFoto ? 'img/uploads/productos/' . rawurlencode($producto['imagen']) : '' ?>" 
+                             class="w-full h-48 object-contain mb-4 rounded-lg <?= $conFoto ? '' : 'hidden' ?>">
                         
-                        <div id="upload-placeholder" class="hidden">
-                            <i class="ph ph-image text-4xl text-gray-300 mb-2"></i>
-                            <p class="text-sm text-gray-500">Click para cambiar</p>
+                        <div id="upload-placeholder" class="h-48 mb-4 flex flex-col items-center justify-center <?= $conFoto ? 'hidden' : '' ?>">
+                            <i class="ph-duotone ph-image text-6xl text-sky-300 mb-2"></i>
+                            <p class="text-sm text-gray-500">Sin imagen. Haz clic para subir una</p>
                         </div>
                         
                         <input type="file" name="imagen" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="mostrarImagen(this)">
@@ -179,7 +180,10 @@
         if (input.files && input.files[0]) {
             var reader = new FileReader();
             reader.onload = function(e) {
-                document.getElementById('preview').src = e.target.result;
+                const preview = document.getElementById('preview');
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                document.getElementById('upload-placeholder').classList.add('hidden');
             }
             reader.readAsDataURL(input.files[0]);
         }
