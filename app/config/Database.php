@@ -1,10 +1,20 @@
 <?php
+require_once __DIR__ . '/env.php';
+loadEnv(__DIR__ . '/../../.env');
+
 class Database {
-    private $host = "127.0.0.1";
-    private $db_name = "FarmaSistema";
-    private $username = "sa";
-    private $password = "***ELIMINADO***";
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
     public $conn;
+
+    public function __construct() {
+        $this->host = env('DB_HOST', '127.0.0.1');
+        $this->db_name = env('DB_NAME', 'FarmaSistema');
+        $this->username = env('DB_USER', '');
+        $this->password = env('DB_PASS', '');
+    }
 
     public function conectar() {
         $this->conn = null;
