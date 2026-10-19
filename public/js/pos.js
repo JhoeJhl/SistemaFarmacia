@@ -152,27 +152,6 @@ function filtrarCategoria(tipo) {
     renderProductos();
 }
 
-// 7. Procesar Venta (Enviar al Backend)
-function procesarVenta() {
-    if (carrito.length === 0) {
-        alert("El carrito está vacío.");
-        return;
-    }
-
-    if (!confirm("¿Confirmar venta?")) return;
-
-    // Calcular total final
-    let total = carrito.reduce((sum, item) => sum + item.subtotal, 0);
-
-    // Llenar inputs ocultos
-    document.getElementById('input-cliente').value = document.getElementById('select-cliente').value;
-    document.getElementById('input-total').value = total;
-    document.getElementById('input-json').value = JSON.stringify(carrito);
-
-    // Enviar formulario
-    document.getElementById('form-venta').submit();
-}
-
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
     renderProductos();

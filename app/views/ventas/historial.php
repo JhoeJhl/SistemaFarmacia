@@ -204,18 +204,6 @@
         }, 300);
     }
 
-    // 3. Exportar a Excel (Básico JS)
-    function exportarTablaExcel() {
-        let tabla = document.getElementById("tablaVentas");
-        let html = tabla.outerHTML.replace(/ /g, '%20');
-
-        // Crear enlace temporal
-        let a = document.createElement('a');
-        a.href = 'data:application/vnd.ms-excel,' + html;
-        a.download = 'Reporte_Ventas_' + new Date().toISOString().slice(0, 10) + '.xls';
-        a.click();
-    }
-
     function confirmarBorradoTotal() {
         Swal.fire({
             title: '¿ESTÁS SEGURO?',

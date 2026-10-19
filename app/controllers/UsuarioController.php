@@ -18,10 +18,6 @@ class UsuarioController {
         require_once __DIR__ . '/../views/usuarios/index.php';
     }
 
-    public function crear() {
-        require_once __DIR__ . '/../views/usuarios/crear.php';
-    }
-
     public function guardar() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nombre = $_POST['nombre'];
