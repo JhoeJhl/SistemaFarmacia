@@ -43,13 +43,12 @@ class VentaController
 
             $id_usuario = $_SESSION['user_id'];
             $id_cliente = $_POST['cliente_id'];
-            $total = $_POST['total_venta'];
 
-            // Decodificamos el JSON de productos que envía el JS
+            // Decodificamos el JSON de productos que envía el JS (solo se usan el ID y la cantidad)
             $productos = json_decode($_POST['productos_json'] ?? '', true);
 
             // Capturamos el ID que retorna el modelo
-            $id_venta = $ventaModel->registrarVenta($id_usuario, $id_cliente, $total, is_array($productos) ? $productos : []);
+            $id_venta = $ventaModel->registrarVenta($id_usuario, $id_cliente, is_array($productos) ? $productos : []);
 
             if ($id_venta) {
                 // Éxito: Pasamos el ID por la URL para que el JS sepa qué ticket imprimir

@@ -12,7 +12,8 @@ class Venta
         $this->conn = $db->conectar();
     }
 
-    public function registrarVenta($id_usuario, $id_cliente, $total, $productos)
+    // El precio y el total se calculan aquí con los datos de la BD; no se usan los que envía el navegador
+    public function registrarVenta($id_usuario, $id_cliente, $productos)
     {
         $this->error = '';
 
@@ -37,10 +38,12 @@ class Venta
             // INICIO DE TRANSACCIÓN (Todo o Nada)
             $this->conn->beginTransaction();
 
-            // Bloquear las filas de los productos y verificar el stock disponible
+            // Bloquear las filas de los productos, verificar el stock y calcular precios
             $stmtCheck = $this->conn->prepare(
-                "SELECT nombre, stock FROM productos WHERE id_producto = :prod AND estado = 1 FOR UPDATE"
+                "SELECT nombre, stock, precio_venta FROM productos WHERE id_producto = :prod AND estado = 1 FOR UPDATE"
             );
+            $detalles = [];
+            $totalCentavos = 0;
             foreach ($cantidades as $id => $cant) {
                 $stmtCheck->execute([':prod' => $id]);
                 $actual = $stmtCheck->fetch(PDO::FETCH_ASSOC);
@@ -50,7 +53,19 @@ class Venta
                 if ((int)$actual['stock'] < $cant) {
                     throw new RuntimeException("Stock insuficiente para \"{$actual['nombre']}\". Disponible: {$actual['stock']}, solicitado: {$cant}.");
                 }
+
+                // Se trabaja en centavos para evitar errores de redondeo
+                $precioCentavos = (int)round($actual['precio_venta'] * 100);
+                $subtotalCentavos = $precioCentavos * $cant;
+                $totalCentavos += $subtotalCentavos;
+                $detalles[] = [
+                    'id' => $id,
+                    'cantidad' => $cant,
+                    'precio' => number_format($precioCentavos / 100, 2, '.', ''),
+                    'subtotal' => number_format($subtotalCentavos / 100, 2, '.', ''),
+                ];
             }
+            $total = number_format($totalCentavos / 100, 2, '.', '');
 
             // A. Insertar Cabecera de Venta
             $sql = "INSERT INTO ventas (id_usuario, id_cliente, total, fecha, estado) 
@@ -75,9 +90,9 @@ class Venta
             $stmtStock = $this->conn->prepare($sqlStock);
 
             // B. Procesar cada producto del carrito
-            foreach ($productos as $prod) {
-                $id = (int)$prod['id'];
-                $cant = (int)$prod['cantidad'];
+            foreach ($detalles as $prod) {
+                $id = $prod['id'];
+                $cant = $prod['cantidad'];
 
                 // 1. Guardar Detalle
                 $stmtDetalle->execute([
