@@ -27,6 +27,17 @@ class Proveedor {
         return $stmt->execute();
     }
 
+    public function actualizar($id, $nombre, $telefono, $correo, $direccion) {
+        $query = "UPDATE " . $this->table . " SET nombre = :nom, telefono = :tel, correo = :cor, direccion = :dir WHERE id_proveedor = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':nom', $nombre);
+        $stmt->bindParam(':tel', $telefono);
+        $stmt->bindParam(':cor', $correo);
+        $stmt->bindParam(':dir', $direccion);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
     public function eliminar($id) {
         // Borrado lógico (no borramos el dato, solo lo ocultamos)
         $query = "UPDATE " . $this->table . " SET estado = 0 WHERE id_proveedor = :id";

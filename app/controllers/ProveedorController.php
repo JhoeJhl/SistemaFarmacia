@@ -31,6 +31,20 @@ class ProveedorController {
         exit;
     }
 
+    public function actualizar() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = filter_var($_POST['id_proveedor'] ?? null, FILTER_VALIDATE_INT);
+            $nombre = trim($_POST['nombre'] ?? '');
+
+            if ($id !== false && $nombre !== '') {
+                $model = new Proveedor();
+                $model->actualizar($id, $nombre, $_POST['telefono'] ?? '', $_POST['correo'] ?? '', $_POST['direccion'] ?? '');
+            }
+        }
+        header("Location: index.php?controller=proveedor&action=index");
+        exit;
+    }
+
     public function eliminar() {
         if (isset($_GET['id'])) {
             $model = new Proveedor();
