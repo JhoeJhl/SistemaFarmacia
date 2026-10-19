@@ -240,6 +240,16 @@
                 const cleanUrl = window.location.pathname + '?controller=venta&action=crear';
                 window.history.replaceState({}, document.title, cleanUrl);
             });
+        } else if (status === 'error') {
+            Swal.fire({
+                icon: 'error',
+                title: 'No se registró la venta',
+                text: urlParams.get('msg') || 'Ocurrió un error al registrar la venta.',
+                confirmButtonColor: '#0ea5e9'
+            }).then(() => {
+                const cleanUrl = window.location.pathname + '?controller=venta&action=crear';
+                window.history.replaceState({}, document.title, cleanUrl);
+            });
         }
     });
 </script>

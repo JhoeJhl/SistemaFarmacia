@@ -4,6 +4,7 @@ require_once __DIR__ . "/../config/Database.php";
 class Venta
 {
     private $conn;
+    public $error = '';
 
     public function __construct()
     {
@@ -13,9 +14,43 @@ class Venta
 
     public function registrarVenta($id_usuario, $id_cliente, $total, $productos)
     {
+        $this->error = '';
+
+        if (empty($productos) || !is_array($productos)) {
+            $this->error = 'El carrito está vacío.';
+            return false;
+        }
+
+        // Agrupar cantidades por producto y rechazar cantidades no válidas
+        $cantidades = [];
+        foreach ($productos as $prod) {
+            $id = filter_var($prod['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $cant = filter_var($prod['cantidad'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($id === false || $cant === false) {
+                $this->error = 'Hay productos con una cantidad no válida en el carrito.';
+                return false;
+            }
+            $cantidades[$id] = ($cantidades[$id] ?? 0) + $cant;
+        }
+
         try {
             // INICIO DE TRANSACCIÓN (Todo o Nada)
             $this->conn->beginTransaction();
+
+            // Bloquear las filas de los productos y verificar el stock disponible
+            $stmtCheck = $this->conn->prepare(
+                "SELECT nombre, stock FROM productos WHERE id_producto = :prod AND estado = 1 FOR UPDATE"
+            );
+            foreach ($cantidades as $id => $cant) {
+                $stmtCheck->execute([':prod' => $id]);
+                $actual = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+                if (!$actual) {
+                    throw new RuntimeException("Un producto del carrito ya no existe o está inactivo.");
+                }
+                if ((int)$actual['stock'] < $cant) {
+                    throw new RuntimeException("Stock insuficiente para \"{$actual['nombre']}\". Disponible: {$actual['stock']}, solicitado: {$cant}.");
+                }
+            }
 
             // A. Insertar Cabecera de Venta
             $sql = "INSERT INTO ventas (id_usuario, id_cliente, total, fecha, estado) 
@@ -34,24 +69,30 @@ class Venta
                            VALUES (:venta, :prod, :cant, :precio, :subtotal)";
             $stmtDetalle = $this->conn->prepare($sqlDetalle);
 
-            // Consulta para RESTAR STOCK
-            $sqlStock = "UPDATE productos SET stock = stock - :cant WHERE id_producto = :prod";
+            // Consulta para RESTAR STOCK (nunca permite dejarlo en negativo)
+            $sqlStock = "UPDATE productos SET stock = stock - :cant
+                         WHERE id_producto = :prod AND stock >= :cant_min";
             $stmtStock = $this->conn->prepare($sqlStock);
 
             // B. Procesar cada producto del carrito
             foreach ($productos as $prod) {
+                $id = (int)$prod['id'];
+                $cant = (int)$prod['cantidad'];
+
                 // 1. Guardar Detalle
-                $stmtDetalle->bindParam(':venta', $id_venta);
-                $stmtDetalle->bindParam(':prod', $prod['id']); // Viene del JSON del POS
-                $stmtDetalle->bindParam(':cant', $prod['cantidad']);
-                $stmtDetalle->bindParam(':precio', $prod['precio']);
-                $stmtDetalle->bindParam(':subtotal', $prod['subtotal']);
-                $stmtDetalle->execute();
+                $stmtDetalle->execute([
+                    ':venta' => $id_venta,
+                    ':prod' => $id,
+                    ':cant' => $cant,
+                    ':precio' => $prod['precio'],
+                    ':subtotal' => $prod['subtotal'],
+                ]);
 
                 // 2. Restar Stock
-                $stmtStock->bindParam(':cant', $prod['cantidad']);
-                $stmtStock->bindParam(':prod', $prod['id']);
-                $stmtStock->execute();
+                $stmtStock->execute([':cant' => $cant, ':prod' => $id, ':cant_min' => $cant]);
+                if ($stmtStock->rowCount() === 0) {
+                    throw new RuntimeException("No se pudo descontar el stock del producto #{$id}.");
+                }
             }
 
             // CONFIRMAR TRANSACCIÓN
@@ -61,7 +102,12 @@ class Venta
             return $id_venta;
         } catch (Exception $e) {
             // Si algo falla, deshacemos todo
-            $this->conn->rollBack();
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            $this->error = ($e instanceof RuntimeException && !($e instanceof PDOException))
+                ? $e->getMessage()
+                : 'No se pudo registrar la venta. Intente nuevamente.';
             return false;
         }
     }
