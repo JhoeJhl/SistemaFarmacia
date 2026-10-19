@@ -127,17 +127,28 @@
 
                 <p class="px-3 text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-2 mt-6">Administración</p>
 
-                <a href="index.php?controller=usuario&action=index"
-                    class="flex items-center px-3 py-2.5 text-brand-100 hover:bg-brand-800 hover:text-white rounded-lg transition-all group">
-                    <i class="ph ph-user-gear text-xl mr-3 text-brand-400 group-hover:text-emerald-400"></i>
-                    Usuarios
-                </a>
+                <?php if (function_exists('isAdmin') && isAdmin()): ?>
+                    <a href="index.php?controller=usuario&action=index"
+                        class="flex items-center px-3 py-2.5 text-brand-100 hover:bg-brand-800 hover:text-white rounded-lg transition-all group">
+                        <i class="ph ph-user-gear text-xl mr-3 text-brand-400 group-hover:text-emerald-400"></i>
+                        Usuarios
+                    </a>
+                <?php endif; ?>
 
                 <a href="index.php?controller=categoria&action=index"
                     class="flex items-center px-3 py-2.5 text-brand-100 hover:bg-brand-800 hover:text-white rounded-lg transition-all group">
                     <i class="ph ph-tag text-xl mr-3 text-brand-400 group-hover:text-emerald-400"></i>
                     Categorías
                 </a>
+
+                <?php if (function_exists('isAdmin') && isAdmin()): ?>
+                    <a href="index.php?controller=backup&action=descargar"
+                        onclick="return confirm('Se descargará una copia de seguridad completa de la base de datos. ¿Continuar?')"
+                        class="flex items-center px-3 py-2.5 text-brand-100 hover:bg-brand-800 hover:text-white rounded-lg transition-all group">
+                        <i class="ph ph-database text-xl mr-3 text-brand-400 group-hover:text-emerald-400"></i>
+                        Copia de Seguridad
+                    </a>
+                <?php endif; ?>
 
             </nav>
 
